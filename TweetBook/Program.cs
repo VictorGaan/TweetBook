@@ -2,29 +2,16 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using TweetBook.Data;
+using TweetBook.Installers;
 using TweetBook.Options;
+using TweetBook.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer(connectionString));
-
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<DataContext>();
-
-builder.Services.AddControllersWithViews(option =>
-{
-    option.EnableEndpointRouting = false;
-});
-
-builder.Services.AddSwaggerGen(x =>
-{
-    x.SwaggerDoc("v1", new OpenApiInfo { Title = "TweetBook API", Version = "v1" });
-});
+builder.Services.InstallServicesInAssembly(builder.Configuration);
 var app = builder.Build();
 
 
