@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TweetBook.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class DataContext : IdentityDbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public DataContext(DbContextOptions<DataContext> options)
             : base(options)
         {
         }
