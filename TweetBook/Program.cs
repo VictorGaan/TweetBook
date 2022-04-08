@@ -15,7 +15,11 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<DataContext>();
-builder.Services.AddControllersWithViews();
+
+builder.Services.AddControllersWithViews(option =>
+{
+    option.EnableEndpointRouting = false;
+});
 
 builder.Services.AddSwaggerGen(x =>
 {
@@ -40,12 +44,12 @@ else
 var swaggerOptions = new SwaggerOptions();
 builder.Configuration.GetSection(nameof(SwaggerOptions)).Bind(swaggerOptions);
 
-
-app.UseSwagger(option => { option.RouteTemplate = swaggerOptions.JsonRoute; });
-app.UseSwaggerUI(option => { option.SwaggerEndpoint(swaggerOptions.UiEndpoint, swaggerOptions.Description); });
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseRouting();
+app.UseSwagger(option => { option.RouteTemplate = swaggerOptions.JsonRoute; });
+app.UseSwaggerUI(option => { option.SwaggerEndpoint(swaggerOptions.UiEndpoint, swaggerOptions.Description); });
 
+
+app.UseMvc();
 app.Run();
