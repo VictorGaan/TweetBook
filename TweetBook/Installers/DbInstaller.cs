@@ -9,14 +9,16 @@ namespace TweetBook.Installers
     {
         public void InstallServices(IServiceCollection services, IConfiguration configuration)
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            //var connectionString = configuration.GetConnectionString("SqlServerConnection");
+            var connectionString = configuration.GetConnectionString("NpgsqlConnection");
             services.AddDbContext<DataContext>(options =>
-                options.UseSqlServer(connectionString));
+                options.UseNpgsql(connectionString));
+                //options.UseSqlServer(connectionString));
 
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<DataContext>();
 
-            services.AddSingleton<IPostService, PostService>();
+            services.AddScoped<IPostService, PostService>(); 
         }
     }
 }
