@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TweetBook.Contracts.Requests;
+using TweetBook.Contracts.Responses;
 using TweetBook.Contracts.V1;
 using TweetBook.Domain;
 using TweetBook.Services;
@@ -7,7 +9,7 @@ namespace TweetBook.Controllers.V1
 {
     public class PostsController : Controller
     {
-        private IPostService _postService;
+        private readonly IPostService _postService;
         public PostsController(IPostService postService)
         {
             _postService = postService;
@@ -29,9 +31,26 @@ namespace TweetBook.Controllers.V1
             return Ok(post);
         }
 
-        [HttpPost(ApiRoutes.Posts.Create)]
-        public IActionResult Create([FromBody] Post post)
+        [HttpPut(ApiRoutes.Posts.Update)]
+        public IActionResult Update([FromRoute] Guid id, [FromBody] UpdatePostRequest postRequest)
         {
+            var post = new Post
+            {
+                Id = id,
+                Name = postRequest.Name
+            };
+
+            var updated = _postService.UpdatePost(post);
+            if (updated)
+                return Ok(post);
+            return NotFound();
+        }
+
+
+        [HttpPost(ApiRoutes.Posts.Create)]
+        public IActionResult Create([FromBody] CreatePostRequest postRequest)
+        {
+            var post = new Post { Id = postRequest.Id };
             if (post.Id != Guid.Empty)
             {
                 post.Id = Guid.NewGuid();
@@ -39,7 +58,8 @@ namespace TweetBook.Controllers.V1
             _postService.GetPosts().Add(post);
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUrl = baseUrl + "/" + ApiRoutes.Posts.Get.Replace("{id}", post.Id.ToString());
-            return Created(locationUrl, post);
+            var response = new PostResponse { Id = post.Id };
+            return Created(locationUrl, response);
         }
     }
 }
