@@ -18,14 +18,38 @@ namespace TweetBook.Services
             _userManager = userManager;
             _jwtSettings = jwtSettings;
         }
-        public async Task<AuthentificationResult> RegisterAsync(string email, string password)
+
+        public async Task<AuthentificationResult> LoginAsync(string email, string password)
         {
-            var existingUser = await _userManager.FindByEmailAsync(email);
-            if (existingUser != null)
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
             {
                 return new AuthentificationResult
                 {
-                    Errors = new string[] { "User with this email already exists" }
+                    Errors = new string[] { "User does not exist" }
+                };
+            }
+
+            var userHasValidPassword = await _userManager.CheckPasswordAsync(user, password);
+            if (!userHasValidPassword)
+            {
+                return new AuthentificationResult
+                {
+                    Errors = new string[] { "User/password combination is wrong" }
+                };
+            }
+
+            return GenerateAuthentificationResultForUser(user);
+        }
+
+        public async Task<AuthentificationResult> RegisterAsync(string email, string password)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return new AuthentificationResult
+                {
+                    Errors = new string[] { "User does not exist" }
                 };
             }
             var newUser = new IdentityUser()
@@ -41,6 +65,11 @@ namespace TweetBook.Services
                     Errors = createdUser.Errors.Select(x => x.Description)
                 };
             }
+           return GenerateAuthentificationResultForUser(newUser);
+        }
+
+        private AuthentificationResult GenerateAuthentificationResultForUser(IdentityUser newUser)
+        {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
             var tokenDescriptor = new SecurityTokenDescriptor()
