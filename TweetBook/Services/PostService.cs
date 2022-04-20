@@ -37,11 +37,21 @@ namespace TweetBook.Services
         public async Task<bool> DeletePostAsync(Guid id)
         {
             var post = await GetPostByIdAsync(id);
-            if(post==null)
+            if (post == null)
                 return false;
             _context.Posts.Remove(post);
             var deleted = await _context.SaveChangesAsync();
             return deleted > 0;
+        }
+
+        public async Task<bool> UserOwnsPostAsync(Guid id, string userId)
+        {
+            var post = await _context.Posts.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id);
+            if (post == null)
+                return false;
+            if (post.UserId != userId)
+                return false;
+            return true;
         }
     }
 }

@@ -5,6 +5,7 @@ using TweetBook.Contracts.Requests;
 using TweetBook.Contracts.Responses;
 using TweetBook.Contracts.V1;
 using TweetBook.Domain;
+using TweetBook.Extensions;
 using TweetBook.Services;
 
 namespace TweetBook.Controllers.V1
@@ -37,11 +38,11 @@ namespace TweetBook.Controllers.V1
         [HttpPut(ApiRoutes.Posts.Update)]
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdatePostRequest postRequest)
         {
-            var post = new Post
-            {
-                Id = id,
-                Name = postRequest.Name
-            };
+            var userOwnsPost = await _postService.UserOwnsPostAsync(id, HttpContext.GetUserId());
+            if (!userOwnsPost)
+                return BadRequest(new { error = "You do not own this post" });
+            var post = await _postService.GetPostByIdAsync(id);
+            post.Name = postRequest.Name;
 
             var updated = await _postService.UpdatePostAsync(post);
             if (updated)
@@ -52,6 +53,10 @@ namespace TweetBook.Controllers.V1
         [HttpDelete(ApiRoutes.Posts.Delete)]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
+            var userOwnsPost = await _postService.UserOwnsPostAsync(id, HttpContext.GetUserId());
+            if (!userOwnsPost)
+                return BadRequest(new { error = "You do not own this post" });
+
             var deleted = await _postService.DeletePostAsync(id);
             if (deleted)
                 return NoContent();
@@ -62,7 +67,11 @@ namespace TweetBook.Controllers.V1
         [HttpPost(ApiRoutes.Posts.Create)]
         public async Task<IActionResult> Create([FromBody] CreatePostRequest postRequest)
         {
-            var post = new Post { Name = postRequest.Name };
+            var post = new Post
+            {
+                Name = postRequest.Name,
+                UserId = HttpContext.GetUserId(),
+            };
             await _postService.CreatePostAsync(post);
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUrl = baseUrl + "/" + ApiRoutes.Posts.Get.Replace("{id}", post.Id.ToString());

@@ -14,7 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.InstallServicesInAssembly(builder.Configuration);
 var app = builder.Build();
 
-
+using (var serviceScope = app.Services.CreateScope())
+{
+    var dbContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 
 // Configure the HTTP request pipeline.
@@ -40,4 +44,4 @@ app.UseSwaggerUI(option => { option.SwaggerEndpoint(swaggerOptions.UiEndpoint, s
 
 
 app.UseMvc();
-app.Run();
+await app.RunAsync();
